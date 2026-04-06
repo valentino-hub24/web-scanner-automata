@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Scientific Notation Scanner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #85ceff 0%, #21cfe2 40%, #6d77ff 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 16px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      width: 400px; height: 400px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+      top: -100px; left: -100px;
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      width: 300px; height: 300px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 50%;
+      bottom: -80px; right: -80px;
+      pointer-events: none;
+    }
+
+    .page-heading {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #fff;
+    }
+    .page-heading h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+    .page-heading p {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    .app-window {
+      width: 600px;
+      max-width: 100%;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(80,0,120,0.3), 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    /* Title bar */
+    .title-bar {
+      background: linear-gradient(90deg, #1e3a8a, #2563eb);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    /* .dot { width: 13px; height: 13px; border-radius: 50%; }
+    .dot-r { background: #ff5f56; }
+    .dot-y { background: #ffbd2e; }
+    .dot-g { background: #27c93f; } */
+    .title-bar-text {
+      flex: 100;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.3px;
+      margin-right: 38px;
+    }
+
+    /* Menu bar — only About */
+    .menu-bar {
+      background: #ffffff;
+      border-bottom: 1px solid #babff2;
+      display: flex;
+      padding: 2px 10px;
+      gap: 2px;
+      position: relative;
+    }
+    .menu-item {
+      position: relative;
+    }
+    .menu-item > span {
+      display: block;
+      padding: 5px 14px;
+      font-size: 13px;
+      color: #2330c0;
+      font-weight: 500;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .menu-item > span:hover { background: #ede9fe; }
+
+    /* Dropdown */
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: #fff;
+      border: 1.5px solid #e0d7f7;
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(124,58,237,0.18);
+      z-index: 100;
+      min-width: 480px;
+      padding: 20px 22px 22px;
+      animation: fadeSlideDown 0.18s ease;
+    }
+    .dropdown.open { display: block; }
+
+    @keyframes fadeSlideDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .dropdown h3 {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #2330c0;
+      margin-bottom: 14px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* Format tables side by side */
+    .format-tables {
+      display: flex;
+      gap: 16px;
+    }
+    .format-section {
+      flex: 1;
+    }
+    .format-section h4 {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-align: center;
+    }
+    .format-section.valid h4 {
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .format-section.invalid h4 {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .format-section table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(124,58,237,0.08);
+      margin-bottom: 0;
+    }
+    .format-section.valid table th {
+      background: linear-gradient(90deg, #16a34a, #22c55e);
+    }
+    .format-section.invalid table th {
+      background: linear-gradient(90deg, #dc2626, #ef4444);
+    }
+    .format-section table th {
+      color: #ffffff;
+      padding: 7px 10px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11.5px;
+    }
+    .format-section table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #f0ebff;
+      color: #333;
+      font-family: 'Fira Code', monospace;
+      font-size: 11.5px;
+    }
+    .format-section table tr:last-child td { border-bottom: none; }
+    .format-section.valid table tr:nth-child(even) td { background: #f0fdf4; }
+    .format-section.invalid table tr:nth-child(even) td { background: #fff5f5; }
+    .format-section.valid table tr:hover td { background: #dcfce7; }
+    .format-section.invalid table tr:hover td { background: #fee2e2; }
+
+    .about-note {
+      margin-top: 14px;
+      font-size: 11.5px;
+      color: #2330c0;
+      background: #2330c0;
+      border-left: 3px solid #fff3f3;
+      padding: 8px 12px;
+      border-radius: 0 6px 6px 0;
+      line-height: 1.6;
+    }
+    .about-note strong { color: #2330c0; }
+
+    /* Body */
+    .app-body { padding: 24px 28px 28px; }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #2330c0;
+      margin-bottom: 10px;
+    }
+
+    /* Reference table (collapsible) */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 22px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(124,58,237,0.08);
+    }
+    table th {
+      background: linear-gradient(90deg, #ffbb00, #a855f7);
+      color: #fff;
+      padding: 9px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12.5px;
+      letter-spacing: 0.03em;
+    }
+    table td {
+      padding: 7px 16px;
+      border-bottom: 1px solid #f0ebff;
+      color: #333;
+    }
+    table tr:last-child td { border-bottom: none; }
+    table tr:nth-child(even) td { background: #faf8ff; }
+    table tr:hover td { background: #f3eeff; }
+    .sci { font-family: 'Fira Code', monospace; color: #7c3aed; font-size: 13px; }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #d8b4fe, transparent);
+      margin: 4px 0 22px;
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .input-group label {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #2330c0;
+      min-width: 52px;
+    }
+    .input-group input {
+      flex: 1;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: 'Fira Code', monospace;
+      border: 1.5px solid #b9cfff;
+      border-radius: 8px;
+      background: #fff;
+      color: #2330c0;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-group input:focus {
+      border-color: #2330c0;
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+      background: #fff;
+    }
+    .input-group input::placeholder { color: #2330c0; font-size: 13px; }
+
+    .run-btn {
+      padding: 10px 22px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13.5px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #2c50b4, #2563eb);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .run-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(124,58,237,0.45); }
+    .run-btn:active { transform: translateY(0); }
+
+    .result-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 48px;
+    }
+    .result-row label {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #2330c0;
+      min-width: 52px;
+    }
+    .result-badge {
+      font-size: 20px;
+      font-weight: 700;
+      padding: 6px 22px;
+      border-radius: 8px;
+      letter-spacing: 1px;
+      transition: all 0.25s;
+    }
+    .result-badge.yes { background: #dcfce7; color: #15803d; border: 1.5px solid #86efac; }
+    .result-badge.no  { background: #fee2e2; color: #b91c1c; border: 1.5px solid #fca5a5; }
+    .result-msg { font-size: 12.5px; color: #6b7280; line-height: 1.5; }
+
+    .status-bar {
+      background: #fff;
+      border-top: 1px solid #babff2;
+      padding: 6px 18px;
+      font-size: 11.5px;
+      color: #2330c0;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .footer {
+      margin-top: 16px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.65);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-heading">
+    <h1>Scientific Notation of Number</h1>
+    <p>Silahkan masukkan angka dan Run apakah termasuk notasi ilmiah</p>
+  </div>
+
+  <div class="app-window">
+
+    <!-- Title bar -->
+    <div class="title-bar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <div class="title-bar-text">Scientific Notation Scanner</div>
+    </div>
+
+    <!-- Menu bar — About only -->
+    <div class="menu-bar" id="menuBar">
+      <div class="menu-item" id="aboutMenu">
+        <span onclick="toggleAbout()">Contoh format</span>
+        <div class="dropdown" id="aboutDropdown">
+          <h3>Format Notasi Ilmiah</h3>
+          <div class="format-tables">
+            <!-- Valid -->
+            <div class="format-section valid">
+              <h4>✓ Valid</h4>
+              <table>
+                <thead><tr><th>Contoh Input</th></tr></thead>
+                <tbody>
+                  <tr><td>3 x 10^2</td></tr>
+                  <tr><td>-5.3 x 10^4</td></tr>
+                  <tr><td>6.72 × 10^9</td></tr>
+                  <tr><td>2 × 10^0</td></tr>
+                  <tr><td>7.51 x 10^-9</td></tr>
+                  <tr><td>-3.1 × 10^-3</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- Not Valid -->
+            <div class="format-section invalid">
+              <h4>✗ Tidak Valid</h4>
+              <table>
+                <thead><tr><th>Contoh Input</th></tr></thead>
+                <tbody>
+                  <tr><td>300</td></tr>
+                  <tr><td>3 * 10^2</td></tr>
+                  <tr><td>3e2</td></tr>
+                  <tr><td>10^5</td></tr>
+                  <tr><td>3 x 10 ^ 2</td></tr>
+                  <tr><td>3.1.2 x 10^4</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="about-note">
+            <strong>Format yang diterima:</strong> <code>a × 10^n</code> atau <code>a x 10^n</code><br>
+            Di mana <strong>a</strong> adalah angka (boleh desimal & negatif), <strong>n</strong> adalah eksponen integer (boleh negatif).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-body">
+
+
+      <!-- Scanner -->
+      <div class="section-label">Scanner</div>
+      <div class="input-group">
+        <label>Input :</label>
+        <input type="text" id="inputBox" placeholder="Contoh: -3.1 x 10^-3"
+               onkeydown="if(event.key==='Enter') check()">
+        <button class="run-btn" onclick="check()">▶ Run</button>
+      </div>
+
+      <!-- Result -->
+      <div class="result-row">
+        <label>Result :</label>
+        <div class="result-badge" id="badge"></div>
+        <div class="result-msg" id="msg"></div>
+      </div>
+
+    </div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span id="status">Ready to use</span>
+      <span>Sci-Notation v1.0</span>
+    </div>
+
+  </div>
+
+  <div class="footer"> Assignment Automata &nbsp;·&nbsp;Prayer V. Ruso</div>
+
+  <script>
+    // Close About dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      var menu = document.getElementById('aboutMenu');
+      if (!menu.contains(e.target)) {
+        document.getElementById('aboutDropdown').classList.remove('open');
+      }
+    });
+
+    function toggleAbout() {
+      document.getElementById('aboutDropdown').classList.toggle('open');
+    }
+
+
+    function check() {
+      var input  = document.getElementById("inputBox").value.trim();
+      var badge  = document.getElementById("badge");
+      var msg    = document.getElementById("msg");
+      var status = document.getElementById("status");
+
+      if (!input) {
+        badge.className = "result-badge";
+        badge.textContent = "";
+        msg.textContent = "⚠ Masukkan angka terlebih dahulu.";
+        status.textContent = "Input kosong";
+        return;
+      }
+
+      var pattern = /^-?\d+(\.\d+)?\s*[x×]\s*10\^-?\d+$/i;
+
+      if (pattern.test(input)) {
+        badge.className = "result-badge yes";
+        badge.textContent = "Yes";
+        msg.textContent = "Notasi ilmiah valid ✓ .";
+        status.textContent = "✓ Notasi ilmiah valid terdeteksi";
+      } else {
+        badge.className = "result-badge no";
+        badge.textContent = "No";
+        msg.textContent = "Bukan notasi ilmiah ✗. Format: a × 10^n";
+        status.textContent = "✗ Bukan notasi ilmiah";
+      }
+    }
+  </script>
+
+</body>
+</html>
